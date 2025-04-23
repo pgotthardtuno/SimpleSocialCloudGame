@@ -1,0 +1,97 @@
+/* public/game.css */
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #f0f0f0;
+}
+
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    cursor: pointer; /* Added cursor */
+}
+
+#ui-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: #333;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-family: sans-serif;
+    font-size: 0.9em;
+    z-index: 10;
+    pointer-events: none; /* Added z-index and pointer-events */
+}
+
+#logout-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 11; /* Added z-index */
+}
+
+#instructions {
+    /* Style for pointer lock instructions */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    font-family: sans-serif;
+    display: none; /* Hidden by default */
+    z-index: 12;
+}
+
+/* --- Chat Styling --- */
+#chat-container {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    width: 400px; /* Adjust width as needed */
+    max-width: 90%;
+    z-index: 10; /* Ensure it's above the game canvas but potentially below instructions if they overlap */
+}
+
+#chat-output {
+    height: 150px; /* Adjust height as needed */
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+    color: white;
+    padding: 8px;
+    overflow-y: auto; /* Add scrollbar if messages overflow */
+    margin-bottom: 5px;
+    font-family: sans-serif;
+    font-size: 14px;
+    border-radius: 4px;
+    /* Messages will appear here, so it should be visible by default */
+}
+
+#chat-output p { /* Style individual messages */
+    margin: 0 0 5px 0;
+    word-wrap: break-word; /* Wrap long messages */
+}
+
+#chat-input {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    background-color: rgba(50, 50, 50, 0.8);
+    color: white;
+    font-family: sans-serif;
+    font-size: 14px;
+    box-sizing: border-box; /* Include padding in width */
+    border-radius: 4px;
+    /* display: none; is handled by inline style and JS */
+}
+
+#chat-input:focus {
+    outline: none;
+    background-color: rgba(70, 70, 70, 0.9);
+}
+/* --- End Chat Styling --- */

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Cloud Game - World</title>
+  <!-- Link to the external CSS file -->
+  <link rel="stylesheet" href="/game.css">
+</head>
+<body>
+<!-- UI Elements -->
+<div id="ui-overlay">
+  <p id="user-info">Loading user...</p>
+  <!-- Removed detailed controls from here, moved to instructions -->
+</div>
+<button id="logout-button">Logout</button>
+
+<!-- Instructions for Pointer Lock -->
+<div id="instructions">
+  <div>Click to play</div>
+  <div>W, A, S, D / Arrows: Move</div>
+  <div>SPACE: Up</div>
+  <div>SHIFT / C: Down</div>
+  <div>ESC: Release mouse</div>
+  <div>ENTER: Toggle Chat</div> <!-- Added chat instruction -->
+</div>
+
+<!-- Canvas for Three.js -->
+<div id="game-container"></div>
+
+<!-- Chat UI Elements -->
+<div id="chat-container">
+  <div id="chat-output">
+    <!-- Messages will appear here -->
+  </div>
+  <input type="text" id="chat-input" placeholder="Press Enter to chat..." style="display: none;"> <!-- Hidden initially -->
+</div>
+
+
+<!-- Include Three.js as an ES Module -->
+<script type="importmap">
+  {
+      "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+  }
+</script>
+
+<!-- Load the main game logic from the external game.js file -->
+<script type="module" src="/game.js"></script>
+
+</body>
+</html>

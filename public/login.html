@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <!-- Link to CSS -->
+</head>
+<body>
+<h1>Login</h1>
+<form id="login-form">
+  <div>
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+  </div>
+  <div>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+  </div>
+  <button type="submit">Login</button>
+</form>
+<p id="message"></p>
+<p>Don't have an account? <a href="/register.html">Register here</a></p>
+
+<script>
+  const form = document.getElementById('login-form');
+  const messageEl = document.getElementById('message');
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    messageEl.textContent = '';
+
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        messageEl.textContent = `Success: ${result.message}. Redirecting to game...`;
+        messageEl.style.color = 'green';
+        // --- Authentication Handling ---
+        // Store the token (e.g., in localStorage)
+        localStorage.setItem('authToken', result.token);
+        localStorage.setItem('userInfo', JSON.stringify(result.user)); // Store user info too
+
+        // Redirect to the main game page (we'll create this later)
+        setTimeout(() => {
+          window.location.href = '/game.html'; // Or wherever your game page will be
+        }, 1500);
+      } else {
+        messageEl.textContent = `Error: ${result.message}`;
+        messageEl.style.color = 'red';
+        localStorage.removeItem('authToken'); // Clear any old token on failure
+        localStorage.removeItem('userInfo');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      messageEl.textContent = 'An error occurred during login.';
+      messageEl.style.color = 'red';
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userInfo');
+    }
+  });
+</script>
+</body>
+</html>

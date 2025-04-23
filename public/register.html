@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <!-- Link to CSS -->
+</head>
+<body>
+<h1>Register</h1>
+<form id="register-form">
+    <div>
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+    </div>
+    <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+    </div>
+    <div>
+        <label for="color">Choose Cube Color:</label>
+        <select id="color" name="color" required>
+            <option value="">--Select a Color--</option>
+            <option value="red" style="background-color: red; color: white;">Red</option>
+            <option value="orange" style="background-color: orange;">Orange</option>
+            <option value="yellow" style="background-color: yellow;">Yellow</option>
+            <option value="green" style="background-color: green; color: white;">Green</option>
+            <option value="blue" style="background-color: blue; color: white;">Blue</option>
+            <option value="indigo" style="background-color: indigo; color: white;">Indigo</option>
+            <option value="violet" style="background-color: violet;">Violet</option>
+        </select>
+    </div>
+    <button type="submit">Register</button>
+</form>
+<p id="message"></p>
+<p>Already have an account? <a href="/login.html">Login here</a></p>
+
+<script>
+    const form = document.getElementById('register-form');
+    const messageEl = document.getElementById('message');
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault(); // Prevent default form submission
+        messageEl.textContent = ''; // Clear previous messages
+
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) { // Status code 200-299
+                messageEl.textContent = `Success: ${result.message}. Redirecting to login...`;
+                messageEl.style.color = 'green';
+                // Redirect to login page after a short delay
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 2000);
+            } else {
+                messageEl.textContent = `Error: ${result.message}`;
+                messageEl.style.color = 'red';
+            }
+        } catch (error) {
+            console.error('Registration error:', error);
+            messageEl.textContent = 'An error occurred during registration.';
+            messageEl.style.color = 'red';
+        }
+    });
+</script>
+</body>
+</html>
