@@ -46,7 +46,7 @@ export function setupControls(
     // Define listeners
     boundOnLock = () => {
         if (instructionsEl) instructionsEl.style.display = 'none';
-        console.log('Pointer Locked');
+        //console.log('Pointer Locked');
         // Reset flags on lock to prevent sticky movement if keys were held during unlock
         resetMovementFlags();
     };
@@ -56,7 +56,7 @@ export function setupControls(
         if (instructionsEl && !isChatting()) {
             instructionsEl.style.display = 'block';
         }
-        console.log('Pointer Unlocked');
+        //console.log('Pointer Unlocked');
         // Reset movement flags when pointer is unlocked to stop movement
         resetMovementFlags();
     };
@@ -75,7 +75,7 @@ export function setupControls(
     document.addEventListener('keydown', boundOnKeyDown);
     document.addEventListener('keyup', boundOnKeyUp);
 
-    console.log("Player controls initialized.");
+    //console.log("Player controls initialized.");
     return controls;
 }
 
@@ -166,7 +166,7 @@ function onKeyUp(event: KeyboardEvent): void {
 
 // --- Cleanup Function ---
 export function removeControlListeners(): void {
-    console.log("Removing player control listeners...");
+    //console.log("Removing player control listeners...");
     if (controls) {
         if (boundOnLock) controls.removeEventListener('lock', boundOnLock);
         if (boundOnUnlock) controls.removeEventListener('unlock', boundOnUnlock);
@@ -185,5 +185,5 @@ export function removeControlListeners(): void {
     boundOnUnlock = null;
     resetMovementFlags(); // Ensure movement stops
     velocity.set(0, 0, 0); // Reset velocity
-    console.log("Player control listeners removed.");
+    //console.log("Player control listeners removed.");
 }

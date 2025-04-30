@@ -6,7 +6,7 @@ exports.stopMatchTimer = stopMatchTimer;
 // src/server/websocket/match.ts
 const clients_1 = require("./clients");
 const handlers_1 = require("./handlers"); // Import the respawn function
-const MATCH_DURATION_MS = 5 * 60 * 1000; // 5 minutes
+const MATCH_DURATION_MS = 1 * 60 * 1000; // 1 minutes
 const POST_MATCH_DELAY_MS = 10 * 1000; // 10 seconds
 let matchEndTime = 0;
 let matchTimerInterval = null;

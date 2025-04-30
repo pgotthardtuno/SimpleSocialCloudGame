@@ -31,7 +31,7 @@ export function setupScene(container: HTMLElement): void {
     // -------------------------
 
     // 3. Renderer
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true; // Enable shadows
@@ -107,7 +107,7 @@ export function animate(time: number): void {
         // renderer.sortObjects = !renderer.sortObjects; // <-- REMOVED
         // --- END REMOVED ---
 
-        console.log("Rendering frame");
+        //console.log("Rendering frame");
         renderer.render(scene, camera); // The actual render call
 
     } else {

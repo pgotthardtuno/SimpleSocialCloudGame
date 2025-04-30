@@ -78,7 +78,7 @@ scene, instructionsEl) {
     boundOnLock = () => {
         if (instructionsEl)
             instructionsEl.style.display = 'none';
-        console.log('Pointer Locked');
+        //console.log('Pointer Locked');
         // Reset flags on lock to prevent sticky movement if keys were held during unlock
         resetMovementFlags();
     };
@@ -87,7 +87,7 @@ scene, instructionsEl) {
         if (instructionsEl && !(0, chat_1.isChatting)()) {
             instructionsEl.style.display = 'block';
         }
-        console.log('Pointer Unlocked');
+        //console.log('Pointer Unlocked');
         // Reset movement flags when pointer is unlocked to stop movement
         resetMovementFlags();
     };
@@ -103,7 +103,7 @@ scene, instructionsEl) {
     domElement.addEventListener('click', boundOnClick); // Listen on the canvas
     document.addEventListener('keydown', boundOnKeyDown);
     document.addEventListener('keyup', boundOnKeyUp);
-    console.log("Player controls initialized.");
+    //console.log("Player controls initialized.");
     return controls;
 }
 // --- Getters ---
@@ -219,7 +219,7 @@ function onKeyUp(event) {
 }
 // --- Cleanup Function ---
 function removeControlListeners() {
-    console.log("Removing player control listeners...");
+    //console.log("Removing player control listeners...");
     if (controls) {
         if (boundOnLock)
             controls.removeEventListener('lock', boundOnLock);
@@ -239,5 +239,5 @@ function removeControlListeners() {
     boundOnUnlock = null;
     resetMovementFlags(); // Ensure movement stops
     velocity.set(0, 0, 0); // Reset velocity
-    console.log("Player control listeners removed.");
+    //console.log("Player control listeners removed.");
 }

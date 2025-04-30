@@ -26292,7 +26292,7 @@ function setupScene(container) {
     1e3
     // Far clipping plane
   );
-  renderer = new WebGLRenderer({ antialias: true });
+  renderer = new WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.shadowMap.enabled = true;
@@ -26330,7 +26330,6 @@ function setupScene(container) {
 }
 function animate(time) {
   if (renderer && scene && camera) {
-    console.log("Rendering frame");
     renderer.render(scene, camera);
   } else {
     console.warn("Skipping render: Renderer, scene, or camera not ready.");
@@ -26452,13 +26451,9 @@ function cleanupWebSocket() {
 
 // src/client/utils.ts
 function showLaserEffect(scene2, camera2, startPoint, endPoint, color = 16711680, durationMs = 200) {
-  console.log(`[showLaserEffect ENTRY] Called. Scene object received:`, scene2 ? "Exists" : "MISSING");
-  console.log(`[showLaserEffect ENTRY] Camera object received:`, camera2 ? "Exists" : "MISSING");
   if (!scene2 || !camera2) {
-    console.error("[showLaserEffect] Returning early because scene or camera object is missing!");
     return;
   }
-  console.log(`[showLaserEffect] Creating laser. Start: ${startPoint.toArray().map((n) => n.toFixed(2))}, End: ${endPoint.toArray().map((n) => n.toFixed(2))}, Color: ${color.toString(16)}, Duration: ${durationMs}`);
   const points = [startPoint.clone(), endPoint.clone()];
   const geometry = new BufferGeometry().setFromPoints(points);
   const material = new LineBasicMaterial({
@@ -26475,35 +26470,25 @@ function showLaserEffect(scene2, camera2, startPoint, endPoint, color = 16711680
   });
   const line = new Line(geometry, material);
   line.name = "laser_effect";
-  console.log(`[showLaserEffect] Line object created: UUID=${line.uuid}, Name=${line.name}`);
   const childrenBeforeAdd = scene2.children.length;
-  console.log(`[showLaserEffect] Adding line ${line.uuid} to scene. Current children count: ${childrenBeforeAdd}`);
   scene2.add(line);
   const childrenAfterAdd = scene2.children.length;
-  console.log(`[showLaserEffect] Line added. New children count: ${childrenAfterAdd}`);
   if (childrenAfterAdd <= childrenBeforeAdd) {
     console.error(`[showLaserEffect] CRITICAL: Scene children count did NOT increase after adding line ${line.uuid}!`);
   } else {
-    console.log(`[showLaserEffect] Confirmed line ${line.uuid} is in scene children.`);
   }
   geometry.computeBoundingSphere();
-  console.log("[showLaserEffect] Called geometry.computeBoundingSphere()");
   setTimeout(() => {
-    console.log(`[showLaserEffect setTimeout] Attempting to remove line ${line.uuid} after ${durationMs}ms.`);
     if (scene2) {
       const lineExists = scene2.getObjectByProperty("uuid", line.uuid);
       if (lineExists) {
         scene2.remove(line);
-        console.log(`[showLaserEffect setTimeout] Successfully removed line ${line.uuid}.`);
       } else {
-        console.warn(`[showLaserEffect setTimeout] Line ${line.uuid} was already removed or not found.`);
       }
     } else {
-      console.warn(`[showLaserEffect setTimeout] Scene object missing, cannot remove line ${line.uuid}.`);
     }
     geometry.dispose();
     material.dispose();
-    console.log(`[showLaserEffect setTimeout] Disposed geometry and material for line ${line.uuid}.`);
   }, durationMs);
 }
 function createUsernameLabel(username) {
@@ -26800,7 +26785,6 @@ function setupChat(containerEl, outputEl, inputEl, onSendMessage) {
   console.log("Chat module initialized.");
 }
 function isChatting() {
-  console.log(`[isChatting getter] Returning: ${isChattingState}`);
   return isChattingState;
 }
 function toggleChatInput(show, forceCloseNoSend = false) {
@@ -26810,12 +26794,10 @@ function toggleChatInput(show, forceCloseNoSend = false) {
   }
   const wasChatting = isChattingState;
   if (show) {
-    console.log("[toggleChatInput] Opening chat.");
     isChattingState = true;
     chatInputElement.style.display = "block";
     chatInputElement.focus();
   } else {
-    console.log("[toggleChatInput] Closing chat.");
     const message = chatInputElement.value.trim();
     if (!forceCloseNoSend && message) {
       handleSendMessageCallback(message);
@@ -26823,7 +26805,6 @@ function toggleChatInput(show, forceCloseNoSend = false) {
     chatInputElement.style.display = "none";
     chatInputElement.value = "";
     isChattingState = false;
-    console.log(`[toggleChatInput] isChattingState set to: ${isChattingState}`);
   }
 }
 function displayChatMessage(username, message) {
@@ -26836,10 +26817,8 @@ function displayChatMessage(username, message) {
   chatOutputElement.scrollTop = chatOutputElement.scrollHeight;
 }
 function cleanupChat() {
-  console.log("Cleaning up chat module...");
   if (chatInputElement && chatInputKeyListener) {
     chatInputElement.removeEventListener("keydown", chatInputKeyListener);
-    console.log("Removed chat input key listener.");
   }
   chatInputElement = null;
   chatOutputElement = null;
@@ -26848,7 +26827,6 @@ function cleanupChat() {
   };
   chatInputKeyListener = null;
   isChattingState = false;
-  console.log("Chat module cleanup complete.");
 }
 
 // src/client/main.ts

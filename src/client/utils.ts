@@ -12,16 +12,16 @@ export function showLaserEffect(
     durationMs: number = 200
 ): void {
     // --- Enhanced Logging ---
-    console.log(`[showLaserEffect ENTRY] Called. Scene object received:`, scene ? 'Exists' : 'MISSING');
-    console.log(`[showLaserEffect ENTRY] Camera object received:`, camera ? 'Exists' : 'MISSING');
+    //console.log(`[showLaserEffect ENTRY] Called. Scene object received:`, scene ? 'Exists' : 'MISSING');
+    //console.log(`[showLaserEffect ENTRY] Camera object received:`, camera ? 'Exists' : 'MISSING');
     // ---
 
     if (!scene || !camera) {
-        console.error("[showLaserEffect] Returning early because scene or camera object is missing!");
+        //console.error("[showLaserEffect] Returning early because scene or camera object is missing!");
         return;
     }
 
-    console.log(`[showLaserEffect] Creating laser. Start: ${startPoint.toArray().map(n => n.toFixed(2))}, End: ${endPoint.toArray().map(n => n.toFixed(2))}, Color: ${color.toString(16)}, Duration: ${durationMs}`);
+    //console.log(`[showLaserEffect] Creating laser. Start: ${startPoint.toArray().map(n => n.toFixed(2))}, End: ${endPoint.toArray().map(n => n.toFixed(2))}, Color: ${color.toString(16)}, Duration: ${durationMs}`);
 
     // 1. Create Geometry
     const points = [startPoint.clone(), endPoint.clone()];
@@ -44,21 +44,21 @@ export function showLaserEffect(
     const line = new THREE.Line(geometry, material);
     line.name = "laser_effect";
     // --- Log Line Creation ---
-    console.log(`[showLaserEffect] Line object created: UUID=${line.uuid}, Name=${line.name}`);
+    //console.log(`[showLaserEffect] Line object created: UUID=${line.uuid}, Name=${line.name}`);
     // ---
 
     // 4. Add to Scene
     const childrenBeforeAdd = scene.children.length; // Log count before
-    console.log(`[showLaserEffect] Adding line ${line.uuid} to scene. Current children count: ${childrenBeforeAdd}`);
+    //console.log(`[showLaserEffect] Adding line ${line.uuid} to scene. Current children count: ${childrenBeforeAdd}`);
     scene.add(line);
     const childrenAfterAdd = scene.children.length; // Log count after
-    console.log(`[showLaserEffect] Line added. New children count: ${childrenAfterAdd}`);
+    //console.log(`[showLaserEffect] Line added. New children count: ${childrenAfterAdd}`);
 
     // --- Check if add actually worked ---
     if (childrenAfterAdd <= childrenBeforeAdd) {
         console.error(`[showLaserEffect] CRITICAL: Scene children count did NOT increase after adding line ${line.uuid}!`);
     } else {
-        console.log(`[showLaserEffect] Confirmed line ${line.uuid} is in scene children.`);
+        //console.log(`[showLaserEffect] Confirmed line ${line.uuid} is in scene children.`);
     }
     // ---
 
@@ -66,29 +66,29 @@ export function showLaserEffect(
     // This recalculates the object's spatial bounds, which might
     // signal to the renderer that it needs to be included in the render.
     geometry.computeBoundingSphere();
-    console.log('[showLaserEffect] Called geometry.computeBoundingSphere()');
+    //console.log('[showLaserEffect] Called geometry.computeBoundingSphere()');
     // ---------------------------------------------
 
     // 5. Remove after duration
     setTimeout(() => {
         // --- Log Removal ---
-        console.log(`[showLaserEffect setTimeout] Attempting to remove line ${line.uuid} after ${durationMs}ms.`);
+        //console.log(`[showLaserEffect setTimeout] Attempting to remove line ${line.uuid} after ${durationMs}ms.`);
         // ---
         if (scene) { // Check scene still exists
             const lineExists = scene.getObjectByProperty('uuid', line.uuid);
             if (lineExists) {
                 scene.remove(line);
-                console.log(`[showLaserEffect setTimeout] Successfully removed line ${line.uuid}.`);
+                //console.log(`[showLaserEffect setTimeout] Successfully removed line ${line.uuid}.`);
             } else {
-                console.warn(`[showLaserEffect setTimeout] Line ${line.uuid} was already removed or not found.`);
+                //console.warn(`[showLaserEffect setTimeout] Line ${line.uuid} was already removed or not found.`);
             }
         } else {
-            console.warn(`[showLaserEffect setTimeout] Scene object missing, cannot remove line ${line.uuid}.`);
+            //console.warn(`[showLaserEffect setTimeout] Scene object missing, cannot remove line ${line.uuid}.`);
         }
         // Dispose resources
         geometry.dispose();
         material.dispose();
-        console.log(`[showLaserEffect setTimeout] Disposed geometry and material for line ${line.uuid}.`);
+        //console.log(`[showLaserEffect setTimeout] Disposed geometry and material for line ${line.uuid}.`);
     }, durationMs);
 }
 

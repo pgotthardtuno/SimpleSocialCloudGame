@@ -60,7 +60,7 @@ function setupChat(containerEl, outputEl, inputEl, onSendMessage) {
 function isChatting() {
     // --- ADD LOGGING ---
     // Consider removing this verbose logging once stable
-    console.log(`[isChatting getter] Returning: ${isChattingState}`);
+    //console.log(`[isChatting getter] Returning: ${isChattingState}`);
     // -------------------
     return isChattingState;
 }
@@ -73,14 +73,14 @@ function toggleChatInput(show, forceCloseNoSend = false) {
     const wasChatting = isChattingState; // Check state *before* changing it
     if (show) {
         // --- Opening Chat ---
-        console.log("[toggleChatInput] Opening chat."); // Log opening
+        //console.log("[toggleChatInput] Opening chat."); // Log opening
         isChattingState = true;
         chatInputElement.style.display = 'block';
         chatInputElement.focus();
     }
     else {
         // --- Closing Chat ---
-        console.log("[toggleChatInput] Closing chat."); // Log closing
+        //console.log("[toggleChatInput] Closing chat."); // Log closing
         const message = chatInputElement.value.trim();
         if (!forceCloseNoSend && message) {
             handleSendMessageCallback(message);
@@ -89,7 +89,7 @@ function toggleChatInput(show, forceCloseNoSend = false) {
         chatInputElement.value = '';
         // --- Set state and log immediately ---
         isChattingState = false;
-        console.log(`[toggleChatInput] isChattingState set to: ${isChattingState}`);
+        //console.log(`[toggleChatInput] isChattingState set to: ${isChattingState}`);
         // ------------------------------------
         // --- REMOVED CALLBACK CALL ---
         // if (wasChatting && onChatCloseCallback) {
@@ -111,10 +111,10 @@ function displayChatMessage(username, message) {
 }
 // --- Cleanup Function ---
 function cleanupChat() {
-    console.log("Cleaning up chat module...");
+    //console.log("Cleaning up chat module...");
     if (chatInputElement && chatInputKeyListener) {
         chatInputElement.removeEventListener('keydown', chatInputKeyListener);
-        console.log("Removed chat input key listener.");
+        //console.log("Removed chat input key listener.");
     }
     chatInputElement = null;
     chatOutputElement = null;
@@ -123,5 +123,5 @@ function cleanupChat() {
     chatInputKeyListener = null;
     // REMOVED: onChatCloseCallback = null;
     isChattingState = false;
-    console.log("Chat module cleanup complete.");
+    //console.log("Chat module cleanup complete.");
 }

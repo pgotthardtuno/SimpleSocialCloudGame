@@ -60,7 +60,7 @@ function setupScene(container) {
     // camera.position.set(0, 1.6, 5); // Example initial position
     // -------------------------
     // 3. Renderer
-    exports.renderer = new THREE.WebGLRenderer({ antialias: true });
+    exports.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
     exports.renderer.setSize(window.innerWidth, window.innerHeight);
     exports.renderer.setPixelRatio(window.devicePixelRatio);
     exports.renderer.shadowMap.enabled = true; // Enable shadows
@@ -126,7 +126,7 @@ function animate(time) {
         // --- REMOVED DIAGNOSTIC TOGGLE ---
         // renderer.sortObjects = !renderer.sortObjects; // <-- REMOVED
         // --- END REMOVED ---
-        console.log("Rendering frame");
+        //console.log("Rendering frame");
         exports.renderer.render(exports.scene, exports.camera); // The actual render call
     }
     else {
