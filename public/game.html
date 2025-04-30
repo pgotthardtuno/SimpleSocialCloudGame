@@ -4,14 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Social Cloud Game - World</title>
-  <!-- Link to the external CSS file -->
   <link rel="stylesheet" href="/game.css">
 </head>
 <body>
 <!-- UI Elements -->
 <div id="ui-overlay">
   <p id="user-info">Loading user...</p>
-  <!-- Removed detailed controls from here, moved to instructions -->
+  <!-- NEW: Match Timer -->
+  <div id="match-timer">Match Time: --:--</div>
+  <!-- END NEW -->
 </div>
 <button id="logout-button">Logout</button>
 
@@ -22,7 +23,10 @@
   <div>SPACE: Up</div>
   <div>SHIFT / C: Down</div>
   <div>ESC: Release mouse</div>
-  <div>ENTER: Toggle Chat</div> <!-- Added chat instruction -->
+  <div>ENTER: Toggle Chat</div>
+  <!-- NEW: Scoreboard Instruction -->
+  <div>TAB: Show/Hide Scoreboard</div>
+  <!-- END NEW -->
 </div>
 
 <!-- Canvas for Three.js -->
@@ -30,12 +34,34 @@
 
 <!-- Chat UI Elements -->
 <div id="chat-container">
-  <div id="chat-output">
-    <!-- Messages will appear here -->
-  </div>
-  <input type="text" id="chat-input" placeholder="Press Enter to chat..." style="display: none;"> <!-- Hidden initially -->
+  <div id="chat-output"></div>
+  <input type="text" id="chat-input" placeholder="Press Enter to chat..." style="display: none;">
 </div>
 
+<!-- Crosshair -->
+<div id ="crosshair"></div>
+
+<!-- NEW: Health Display (Added here instead of dynamically) -->
+<div id="health-display">Health: 100</div>
+<!-- END NEW -->
+
+<!-- NEW: Scoreboard -->
+<div id="scoreboard" style="display: none;">
+  <h2>Scoreboard</h2>
+  <table id="scoreboard-table">
+    <thead>
+    <tr>
+      <th>Player</th>
+      <th>Kills</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Score rows will be added here -->
+    </tbody>
+  </table>
+  <div id="scoreboard-message" style="margin-top: 10px; font-style: italic;"></div>
+</div>
+<!-- END NEW -->
 
 <!-- Include Three.js as an ES Module -->
 <script type="importmap">
@@ -47,8 +73,8 @@
   }
 </script>
 
-<!-- Load the main game logic from the external game.js file -->
-<script type="module" src="/game.js"></script>
+<!-- Load the main game logic -->
+<script type="module" src="/js/bundle.js"></script>
 
 </body>
 </html>

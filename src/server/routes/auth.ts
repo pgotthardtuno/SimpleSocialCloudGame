@@ -178,7 +178,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction): P
         const token = jwt.sign(
             payload,
             jwtSecret!, // Use non-null assertion '!' as we check/throw at the top
-            { expiresIn: '1h' } // Token expires in 1 hour - consider making this configurable
+            { expiresIn: '12h' } // Token expires in 1 hour - consider making this configurable
         );
 
         console.log(`User ${user.username} logged in.`); // Log the correct username casing from DB

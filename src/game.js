@@ -44,10 +44,14 @@ const otherPlayers = new Map();
 // --- Function to Initialize WebSocket ---
 function initWebSocket() {
     // Construct WebSocket URL (ws:// or wss:// for secure)
+    // --- UPDATED FOR HTTPS ---
+    // This logic correctly determines the protocol based on the page's protocol
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    // If you wanted to force wss:, you could use: const wsProtocol = 'wss:';
+    // --- END UPDATE ---
     const wsUrl = `${wsProtocol}//${window.location.host}`; // Connect to the same host/port
 
-    console.log(`Connecting to WebSocket at ${wsUrl}...`);
+    console.log(`Connecting to WebSocket at ${wsUrl}...`); // Should now log wss://...
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
@@ -447,7 +451,7 @@ function animate() { // <-- MODIFIED
     // 100ms = Match update interval exactly
     // 150ms = Slight buffer for jitter
     // 200ms = Double buffer (might feel slightly laggy)
-    const interpolationTime = 150; // Using 150ms as suggested
+    const interpolationTime = 100; // Using 150ms as suggested
 
     otherPlayers.forEach((player) => {
         if (!player.mesh || !player.targetPos) return; // Skip if mesh or targetPos doesn't exist
