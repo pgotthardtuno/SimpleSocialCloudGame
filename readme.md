@@ -1,93 +1,151 @@
 Deployment Instructions for UBUNTU
 
+# Update package lists
 sudo apt update
 
-sudo apt install git -y
+# Install Node.js (using NodeSource for a recent version)
+# Check NodeSource docs for the latest recommended version if needed
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt install -y nodejs
 
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+# Install Git
+sudo apt install -y git
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+# Install Nginx
+sudo apt install -y nginx
 
-nvm install 20
-
-nvm use 20
-nvm alias default 20
-
+# Verify installations (optional)
 node -v
 npm -v
+git --version
+nginx -v
 
-sudo apt install nginx -y
 
-sudo systemctl start nginx
-sudo systemctl enable nginx
 
-sudo apt install build-essential python3 -y
 
-sudo npm install pm2 -g
+# Navigate to a suitable directory
+mkdir CloudCode
+cd CloudCode
 
+# Clone the repository
 git clone https://github.com/pgotthardtuno/SimpleSocialCloudGame.git .
 
 npm install
 
 npm run build
 
-nano .env
+# Navigate to a directory where you want to store the certs
+# Using /etc/ssl/ is common, but requires sudo.
+# For simplicity during setup, you could create them in your project root,
+# but ensure they are NOT committed to Git and have proper permissions.
+# Example: Creating in /etc/ssl/
+sudo mkdir -p /etc/ssl/private
+sudo mkdir -p /etc/ssl/certs
 
-// PUT THIS BLOCK INTO THE .ENV FILE AND SAVE IT //
+# Generate the private key and self-signed certificate
+# This command creates both a key (server.key) and a certificate (server.crt)
+# valid for 365 days. You'll be prompted for some info (Country, Org, etc.)
+# For 'Common Name', you can use your EC2 public DNS or IP, or just 'localhost'
+# if only accessing locally or via Nginx proxy.
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+-keyout /etc/ssl/private/nginx-selfsigned.key \
+-out /etc/ssl/certs/nginx-selfsigned.crt
 
-PORT=3000
-JWT_SECRET="H27&si&go*8sgFSHS"
+# (Optional but recommended) Create a strong Diffie-Hellman group
+sudo openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048
 
-// END .ENV FILE //
+# Adjust permissions (important if not running Nginx/Node as root)
+sudo chmod 600 /etc/ssl/private/nginx-selfsigned.key
+sudo chmod 644 /etc/ssl/certs/nginx-selfsigned.crt
+sudo chmod 644 /etc/ssl/certs/dhparam.pem
 
-sudo rm /etc/nginx/sites-enabled/default
 
-sudo nano /etc/nginx/sites-available/social-game
-        
-// PUT THIS BLOCK INTO YOUR nginx.conf AND SAVE IT //
-        server {
-            listen 80 default_server;
-            listen [::]:80 default_server;
+sudo nano /etc/nginx/sites-available/your_domain_or_default     
+# --- HTTPS Reverse Proxy Server Block (Port 443) ---
+server {
+listen 443 ssl http2;
+listen [::]:443 ssl http2;
 
-            # Replace _ with your domain or EC2 public IP
-            server_name _;
+    # Use your EC2 public DNS, IP, or your registered domain if you have one pointed here
+    server_name ec2-18-118-205-217.us-east-2.compute.amazonaws.com; # Or your domain
 
-            # Optional: Set up logging
-            access_log /var/log/nginx/social-game.access.log;
-            error_log /var/log/nginx/social-game.error.log;
+    # --- Use Self-Signed Certificates ---
+    ssl_certificate         /etc/ssl/certs/nginx-selfsigned.crt; # Path to your generated cert
+    ssl_certificate_key     /etc/ssl/private/nginx-selfsigned.key; # Path to your generated key
+    # --- Add the DH Param ---
+    ssl_dhparam             /etc/ssl/certs/dhparam.pem; # Path to your DH param file
+    # --- End Self-Signed ---
 
-            # Root directory (optional, Nginx won't serve static files directly here)
-            # root /var/www/social-game/public;
-            # index index.html index.htm;
+    # --- Add recommended SSL settings (Keep these) ---
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_tickets off;
+    # ssl_stapling off; # OCSP Stapling doesn't apply to self-signed certs
+    # ssl_stapling_verify off;
+    # --- End recommended SSL settings ---
 
-            location / {
-                proxy_pass http://localhost:3000; # Forward requests to your Node app on port 3000
-                proxy_http_version 1.1;
-                proxy_set_header Upgrade $http_upgrade; # Important for WebSockets
-                proxy_set_header Connection 'upgrade';   # Important for WebSockets
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-                proxy_cache_bypass $http_upgrade;
-                proxy_read_timeout 86400s; # Keep long timeouts if WebSockets need them
-                proxy_send_timeout 86400s;
-            }
-        }
+    # --- Logging (Optional but helpful) ---
+    # access_log /var/log/nginx/socialgame_https.access.log;
+    # error_log /var/log/nginx/socialgame_https.error.log;
 
-// END NGINX.CONF FILE //
+    location / {
+        # --- Proxy to your Node.js app (running HTTPS on port 3000) ---
+        proxy_pass https://localhost:3000; # Keep as https
 
-sudo ln -s /etc/nginx/sites-available/social-game /etc/nginx/sites-enabled/
+        # --- Headers needed for the backend app ---
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme; # $scheme will be 'https'
 
-sudo systemctl restart nginx
+        # --- WebSocket Support ---
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
 
-pm2 start dist/server/index.js --name social-game
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+}
 
-// EC2 SECURITY RULES //
+# --- HTTP (Port 80) to HTTPS (Port 443) Redirect Block ---
+server {
+listen 80 default_server;
+listen [::]:80 default_server;
 
-INBOUND: 
-http (port 80) - 0.0.0.0
+    server_name ec2-18-118-205-217.us-east-2.compute.amazonaws.com; # Or your domain
+
+    # --- Redirect all HTTP traffic to HTTPS ---
+    location / {
+        # Use 302 for temporary redirect during testing, change to 301 for permanent
+        return 302 https://$host$request_uri;
+    }
+}
     
-        
+    sudo systemctl restart nginx
+
+# Install PM2 globally
+sudo npm install pm2 -g
+
+# Navigate back to your project directory if you left it
+cd ~/SocialCloudGame # Or /var/www/SocialCloudGame
+
+# Start your application using PM2
+# Make sure the path to your entry file (dist/server/index.js) is correct
+pm2 start dist/server/index.js --name social-cloud-game
+
+# Check the status of your running applications
+pm2 list
+
+# (Optional) View logs
+pm2 logs social-cloud-game
+
+# (Optional) Set up PM2 to start automatically on server reboot
+pm2 startup systemd
+# Follow the instructions given by the command above (it will likely give you a 'sudo env ...' command to run)
+
+# Save the current PM2 process list
+pm2 save 

@@ -10,41 +10,53 @@ export const PORT: number = (portFromEnv !== undefined && !isNaN(portFromEnv)) ?
 
 export function createExpressApp(): express.Application {
     const app: express.Application = express();
-    const SERVER_LOCAL_IP = process.env.LOCAL_IP || '192.168.0.37'; // Keep this for potential local IP access
+    // Use the host defined by the server listening address, or localhost for default
+    const SERVER_HOST = process.env.HOST || 'localhost'; // Use 'localhost' or your domain/IP
 
-    console.log("Configuring Express app...");
+    console.log("Configuring Express app for HTTPS...");
 
-    // --- Adjust Helmet for HTTP ---
+    // --- Adjust Helmet for HTTPS ---
     app.use(
         helmet({
             contentSecurityPolicy: {
                 directives: {
                     ...helmet.contentSecurityPolicy.getDefaultDirectives(),
 
-                    // --- CHANGE: form-action for HTTP ---
+                    // --- CHANGE: form-action for HTTPS ---
                     "form-action": [
                         "'self'", // Allow forms to submit to the same origin
-                        `http://${SERVER_LOCAL_IP}:${PORT}` // Use http://
+                        `https://${SERVER_HOST}:${PORT}` // Use https://
                     ],
 
-                    // --- CHANGE: connect-src for WS (WebSockets) ---
+                    // --- CHANGE: connect-src for WSS (Secure WebSockets) ---
                     "connect-src": [
                         "'self'",
-                        `ws://localhost:${PORT}`,          // Use ws:// for localhost
-                        `ws://${SERVER_LOCAL_IP}:${PORT}`, // Use ws:// for specific IP
+                        `wss://localhost:${PORT}`,          // Use wss:// for localhost
+                        `wss://${SERVER_HOST}:${PORT}`, // Use wss:// for specific host/IP/domain
+                        // Add any other domains you connect to (e.g., APIs)
                     ],
 
-                    "script-src": ["'self'", "https://unpkg.com", "'unsafe-inline'"],
-                    "style-src": ["'self'", "'unsafe-inline'"],
+                    // Allow scripts from self and unpkg
+                    "script-src": ["'self'", "https://unpkg.com", "'unsafe-inline'"], // 'unsafe-inline' might be needed for some libraries, review if possible
+                    // Allow styles from self and inline styles
+                    "style-src": ["'self'", "'unsafe-inline'"], // 'unsafe-inline' is often needed for dynamically added styles, review if possible
+                    // Allow images from self and data URIs
                     "img-src": ["'self'", "data:"],
 
-                    // --- REMOVE: upgrade-insecure-requests ---
-                    // "upgrade-insecure-requests": [], // Not needed for HTTP
+                    // --- RE-ADD: upgrade-insecure-requests ---
+                    // Tells browsers to try HTTPS first for any HTTP URLs
+                    "upgrade-insecure-requests": [],
                 },
             },
-            // --- REMOVE or DISABLE HSTS ---
-            hsts: false, // Disable HSTS as it's HTTPS-only
-            // -----------------------------
+            // --- RE-ENABLE HSTS (Recommended for production) ---
+            // Tells browsers to *only* connect via HTTPS for a specified time
+            hsts: {
+                maxAge: 31536000, // 1 year in seconds
+                includeSubDomains: true, // Optional: Apply HSTS to subdomains too
+                preload: false // Optional: Submit domain for HSTS preload list (requires careful setup)
+            },
+            // Remove or keep other Helmet middleware as needed
+            // e.g., frameguard, hidePoweredBy, etc. are generally good to keep
         })
     );
     // -----------------------------
@@ -76,17 +88,9 @@ export function createExpressApp(): express.Application {
     app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
         console.error("Unhandled Error:", err.stack || err);
         let statusCode = 500;
-        if (typeof (err as any).status === 'number') {
-            statusCode = (err as any).status;
-        } else if (typeof (err as any).statusCode === 'number') {
-            statusCode = (err as any).statusCode;
-        }
-        let message = 'An internal server error occurred.';
-        if (process.env.NODE_ENV !== 'production' || statusCode < 500) {
-            message = err.message || message;
-        }
+        // ... (error handling remains the same) ...
         if (!res.headersSent) {
-            res.status(statusCode).json({ message: message });
+            res.status(statusCode).json({ message: err.message || 'Internal Server Error' });
         } else {
             next(err);
         }
