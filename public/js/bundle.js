@@ -26386,7 +26386,7 @@ function connectWebSocket() {
     window.location.href = "/login.html";
     return;
   }
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const protocol = "ws:";
   const host = window.location.host;
   const wsUrl = `${protocol}//${host}/?token=${encodeURIComponent(token2)}`;
   console.log(`WebSocket: Attempting to connect to ${wsUrl}...`);

@@ -1,34 +1,34 @@
 // src/server/index.ts
 import 'dotenv/config';
-import https from 'https';
-import fs from 'fs';
-import path from 'path';
-import { createExpressApp, PORT } from './server'; // Assuming server.ts exports PORT
+// --- CHANGE: Import http instead of https ---
+import http from 'http';
+// --- REMOVE: fs and path for certs (if not needed elsewhere) ---
+// import fs from 'fs';
+// import path from 'path';
+// -------------------------------------------
+import { createExpressApp, PORT } from './server';
 import { setupWebSocket, closeWebSocketServer } from './websocket';
 import { initializeDatabase, closeDatabase } from './db';
+import os from 'os'; // Import os directly
 
 async function startServer() {
     console.log("Starting application...");
 
-    try { // Wrap startup in a try block
-        // --- Initialize Database FIRST ---
+    try {
         console.log("Initializing database...");
-        await initializeDatabase(); // Await the database initialization
+        await initializeDatabase();
         console.log("Database initialized successfully.");
 
-        // --- Load SSL Certificates ---
+        // --- REMOVE: SSL Certificate Loading ---
+        /*
         const certFileName = process.env.SSL_CERT_FILE || 'localhost+3.pem';
         const keyFileName = process.env.SSL_KEY_FILE || 'localhost+3-key.pem';
-
-        // Corrected path: Go up TWO levels from dist/server to reach the project root
         const certPath = path.resolve(__dirname, '..', '..', certFileName);
         const keyPath = path.resolve(__dirname, '..', '..', keyFileName);
-
         let credentials;
         try {
-            console.log(`Attempting to load SSL key from: ${keyPath}`); // Log path
-            console.log(`Attempting to load SSL certificate from: ${certPath}`); // Log path
-
+            console.log(`Attempting to load SSL key from: ${keyPath}`);
+            console.log(`Attempting to load SSL certificate from: ${certPath}`);
             credentials = {
                 key: fs.readFileSync(keyPath),
                 cert: fs.readFileSync(certPath)
@@ -37,37 +37,35 @@ async function startServer() {
         } catch (err) {
             console.error("---------------------------------------------------------");
             console.error("ERROR: Could not load SSL certificates.");
-            // Log the specific error message from fs.readFileSync
             if (err instanceof Error) {
-                console.error(`Reason: ${err.message}`); // More specific error
+                console.error(`Reason: ${err.message}`);
             } else {
                 console.error(err);
             }
             console.error("---------------------------------------------------------");
-            console.error(`Expected key path: ${keyPath}`); // Log expected paths
+            console.error(`Expected key path: ${keyPath}`);
             console.error(`Expected cert path: ${certPath}`);
             console.error("Ensure the files exist at these locations (project root) and the server has read permissions.");
-            process.exit(1); // Exit if certificates fail
+            process.exit(1);
         }
-        // --------------------------
+        */
+        // ------------------------------------
 
-        // 1. Create the Express App
         const app = createExpressApp();
 
-        // 2. Create the HTTPS Server
-        const server = https.createServer(credentials, app);
+        // --- CHANGE: Create HTTP server ---
+        // Pass only the app, no credentials
+        const server = http.createServer(app);
+        // ----------------------------------
 
-        // 3. Setup the WebSocket Server, passing the HTTPS server instance
-        const wss = setupWebSocket(server);
+        const wss = setupWebSocket(server); // Pass the HTTP server
 
-        // 4. Start listening ONLY AFTER database is ready
-        server.listen({ port: PORT, host: '0.0.0.0' }, () => { // Listen on all interfaces
-            console.log(`🚀 Server listening securely on port ${PORT}`);
-            console.log(`   - Local:            https://localhost:${PORT}`);
-            // Dynamically get local IP or provide clearer instruction
-            const networkInterfaces = require('os').networkInterfaces();
-            let localIp = '<YOUR_LOCAL_IP_ADDRESS>'; // Default placeholder
-            // Simple attempt to find a non-internal IPv4 address
+        server.listen({ port: PORT, host: '0.0.0.0' }, () => {
+            // --- CHANGE: Update console logs for HTTP ---
+            console.log(`🚀 Server listening on port ${PORT}`);
+            console.log(`   - Local:            http://localhost:${PORT}`);
+            const networkInterfaces = os.networkInterfaces();
+            let localIp = '<YOUR_LOCAL_IP_ADDRESS>';
             for (const name of Object.keys(networkInterfaces)) {
                 for (const net of networkInterfaces[name]!) {
                     if (net.family === 'IPv4' && !net.internal) {
@@ -77,51 +75,49 @@ async function startServer() {
                 }
                 if (localIp !== '<YOUR_LOCAL_IP_ADDRESS>') break;
             }
-            console.log(`   - On Your Network:  https://${localIp}:${PORT} (IP may vary)`);
-            console.log("   (You'll likely need to accept browser security warnings for self-signed certs)");
+            console.log(`   - On Your Network:  http://${localIp}:${PORT} (IP may vary)`);
+            // ------------------------------------------
         });
 
-        // --- Graceful Shutdown Handling ---
+        // --- Graceful Shutdown Handling (Adjust server variable name if needed) ---
         const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM'];
         signals.forEach(signal => {
             process.on(signal, async () => {
                 console.log(`\n👋 Received ${signal}, shutting down gracefully...`);
                 try {
-                    // Close WebSocket connections first
                     await closeWebSocketServer();
                     console.log("   - WebSocket server closed.");
 
-                    // Then close the HTTPS server
-                    await new Promise<void>((resolve, reject) => { // Wrap server.close in a promise
-                        server.close((err) => {
+                    // --- CHANGE: Close HTTP server ---
+                    await new Promise<void>((resolve, reject) => {
+                        server.close((err) => { // Use the http server variable
                             if (err) {
-                                console.error("   - Error closing HTTPS server:", err);
+                                console.error("   - Error closing HTTP server:", err);
                                 return reject(err);
                             }
-                            console.log('   - HTTPS server closed.');
+                            console.log('   - HTTP server closed.');
                             resolve();
                         });
                     });
+                    // ---------------------------------
 
-                    // Close Database Connection
-                    await closeDatabase(); // Close DB connection on shutdown
+                    await closeDatabase();
                     console.log("   - Database connection closed.");
 
                     console.log("   - Shutdown complete.");
-                    process.exit(0); // Exit cleanly
+                    process.exit(0);
 
                 } catch (err) {
                     console.error("   - Error during shutdown:", err);
-                    process.exit(1); // Exit with error code if shutdown fails
+                    process.exit(1);
                 }
             });
         });
 
-    } catch (startupError) { // Catch errors during database initialization or other early steps
+    } catch (startupError) {
         console.error("💥 Failed during server startup:", startupError);
-        process.exit(1); // Exit if startup fails
+        process.exit(1);
     }
 }
 
-// --- Run the server ---
-startServer(); // Removed the extra .catch here as the try/catch inside handles it
+startServer();

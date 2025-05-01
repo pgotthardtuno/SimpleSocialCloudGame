@@ -94,8 +94,12 @@ function connectWebSocket() {
         window.location.href = '/login.html';
         return;
     }
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
+    // --- CHANGE: Determine WebSocket protocol for HTTP ---
+    // Always use ws: since we are not using https:
+    const protocol = 'ws:';
+    // const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'; // Old logic
+    // ----------------------------------------------------
+    const host = window.location.host; // This should still work fine
     const wsUrl = `${protocol}//${host}/?token=${encodeURIComponent(token)}`;
     console.log(`WebSocket: Attempting to connect to ${wsUrl}...`);
     ws = new WebSocket(wsUrl);
@@ -119,6 +123,7 @@ function connectWebSocket() {
         console.log(`WebSocket: Connection closed. Code: ${event.code}, Reason: ${event.reason || 'N/A'}`);
         ws = null;
         closeHandler();
+        // Reconnect logic remains the same
         if (event.code !== 1000 && event.code !== 1005) {
             attemptReconnect();
         }

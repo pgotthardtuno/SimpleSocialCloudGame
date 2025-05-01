@@ -1,6 +1,7 @@
 // src/server/websocket/index.ts
 import { WebSocketServer, WebSocket } from 'ws';
 import https from 'https'; // Or 'http' if not using SSL
+import http from 'http'
 import url from 'url';
 import { handleAuthentication, handlePositionUpdate, handleChatMessage, handleDisconnect, handleError, handlePlayerHit, handleLaserFired } from './handlers';
 import { WebSocketClient, removeClient, getClient } from './clients';
@@ -28,7 +29,7 @@ function heartbeat(this: WebSocket) {
     (this as WebSocketClient).isAlive = true;
 }
 
-export function setupWebSocket(server: https.Server): WebSocketServer { // Adjust type if using http
+export function setupWebSocket(server: http.Server): WebSocketServer { // Adjust type if using http
     console.log("Setting up WebSocket server...");
     const wss = new WebSocketServer({ server });
     wssInstance = wss;
