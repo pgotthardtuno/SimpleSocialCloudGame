@@ -95,7 +95,7 @@
             listen [::]:443 ssl http2;
     
             # --- IMPORTANT: Your EC2 Public IP ---
-            server_name 3.145.78.35; # Your IP address
+            server_name 3.145.78.35; ############################### Your IP address ##############################################
     
             # --- Use Self-Signed Certificates ---
             ssl_certificate         /etc/ssl/certs/nginx-selfsigned.crt;
@@ -148,7 +148,7 @@
             listen [::]:80 default_server;
     
             # --- IMPORTANT: Your EC2 Public IP ---
-            server_name 3.145.78.35; # Your IP address
+            server_name 3.145.78.35; ############################### Your IP address ##############################################
     
             # --- Redirect all HTTP traffic to HTTPS ---
             location / {
