@@ -1,7 +1,7 @@
 // src/server/websocket/index.ts
 import { WebSocketServer, WebSocket } from 'ws';
-import https from 'https'; // Or 'http' if not using SSL
-import http from 'http'
+// import https from 'https'; // Or 'http' if not using SSL (Keep http import below)
+import http from 'http'; // Use http since the server itself is http
 import url from 'url';
 import { handleAuthentication, handlePositionUpdate, handleChatMessage, handleDisconnect, handleError, handlePlayerHit, handleLaserFired } from './handlers';
 import { WebSocketClient, removeClient, getClient } from './clients';
@@ -20,18 +20,15 @@ type ClientMessage =
 let wssInstance: WebSocketServer | null = null;
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 
-// Change 'this: WebSocketClient' to 'this: WebSocket'
+// Corrected: 'this' type is WebSocket as expected by ws library's .on('pong', ...)
 function heartbeat(this: WebSocket) {
-    // We might need to cast 'this' if we accessed client-specific props,
-    // but for 'isAlive' it might be okay depending on how WebSocketClient is defined.
-    // To be safe, let's cast, although it might not be strictly necessary if
-    // isAlive is optional on WebSocketClient or added directly.
+    // Cast 'this' to WebSocketClient to access the custom 'isAlive' property
     (this as WebSocketClient).isAlive = true;
 }
 
-export function setupWebSocket(server: http.Server): WebSocketServer { // Adjust type if using http
+export function setupWebSocket(server: http.Server): WebSocketServer { // Use http.Server
     console.log("Setting up WebSocket server...");
-    const wss = new WebSocketServer({ server });
+    const wss = new WebSocketServer({ server }); // Pass the http server
     wssInstance = wss;
 
     wss.on('connection', (ws: WebSocket, req) => {
@@ -72,7 +69,7 @@ export function setupWebSocket(server: http.Server): WebSocketServer { // Adjust
                     return; // Exit early if not authenticated
                 }
 
-                // Ensure client is alive before processing game messages (optional but good practice)
+                // Optional: Check if client is alive before processing game messages
                 // if (!client.isAlive) {
                 //     console.warn(`Received message from non-alive client: ${client.userId}`);
                 //     return;
@@ -107,16 +104,14 @@ export function setupWebSocket(server: http.Server): WebSocketServer { // Adjust
         // --- Error and Close Handling ---
         client.on('error', (error) => {
             handleError(client, error);
-            // Ensure cleanup happens even on error
-            // handleDisconnect will remove the client if userId exists
-            // handleDisconnect(client); // Already called in 'close'
+            // Cleanup is handled by the 'close' event which is usually triggered after 'error'
         });
 
         client.on('close', () => {
             // Clear the pong listener when the client disconnects
             client.off('pong', heartbeat);
             handleDisconnect(client); // Handles broadcasting player_left
-            // Heartbeat cleanup (termination) is handled by the interval function
+            // Heartbeat cleanup (termination) is handled by the interval function below
         });
     });
 
@@ -130,8 +125,7 @@ export function setupWebSocket(server: http.Server): WebSocketServer { // Adjust
             // Check if the client object exists and if isAlive is false
             if (client.isAlive === false) {
                 console.log(`Client ${client.userId || 'unknown'} timed out. Terminating.`);
-                // Ensure disconnect logic runs if terminated this way
-                // handleDisconnect(client); // handleDisconnect is called by client.terminate() triggering 'close'
+                // handleDisconnect is called implicitly when client.terminate() triggers the 'close' event
                 return client.terminate(); // Terminate the connection
             }
 
@@ -164,11 +158,12 @@ export function closeWebSocketServer(): Promise<void> {
             // Stop match timers immediately
             stopMatchTimer();
 
-            // Terminate all client connections
+            // Terminate all client connections gracefully
             wssInstance.clients.forEach(client => {
                 client.terminate();
             });
 
+            // Close the server itself
             wssInstance.close((err) => {
                 if (err) {
                     console.error("Error closing WebSocket server:", err);

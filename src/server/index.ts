@@ -1,8 +1,9 @@
 // src/server/index.ts
 import 'dotenv/config';
-import https from 'https'; // Ensure https is imported
-import fs from 'fs';
-import path from 'path';
+// import https from 'https'; // REMOVE
+import http from 'http'; // ADD
+// import fs from 'fs'; // REMOVE
+// import path from 'path'; // REMOVE (if only used for cert paths)
 import { createExpressApp, PORT } from './server';
 import { setupWebSocket, closeWebSocketServer } from './websocket';
 import { initializeDatabase, closeDatabase } from './db';
@@ -16,44 +17,81 @@ async function startServer() {
         await initializeDatabase();
         console.log("Database initialized successfully.");
 
-        // --- Load Self-Signed SSL Certificates ---
-        // Use the same paths as configured in Nginx
-        const keyPath = '/etc/ssl/private/nginx-selfsigned.key'; // Or your chosen path
-        const certPath = '/etc/ssl/certs/nginx-selfsigned.crt'; // Or your chosen path
-
-        let credentials;
-        try {
-            console.log(`Attempting to load SSL key from: ${keyPath}`);
-            console.log(`Attempting to load SSL certificate from: ${certPath}`);
-            credentials = {
-                key: fs.readFileSync(keyPath),
-                cert: fs.readFileSync(certPath)
-            };
-            console.log(`Self-signed SSL certificates loaded successfully.`);
-        } catch (err) {
-            console.error("---------------------------------------------------------");
-            console.error("ERROR: Could not load SSL certificates for Node.js server.");
-            // ... (keep existing error logging) ...
-            process.exit(1);
-        }
+        // --- REMOVE Self-Signed SSL Certificate Loading ---
+        /*
+        // ... (Commented out SSL certificate loading code) ...
+        */
         // ------------------------------------
 
         const app = createExpressApp();
 
-        // --- Create HTTPS server ---
-        const server = https.createServer(credentials, app);
+        // --- Create HTTP server --- CHANGE HERE
+        // const server = https.createServer(credentials, app); // REMOVE
+        const server = http.createServer(app); // ADD - Correctly using HTTP
         // ----------------------------------
 
-        const wss = setupWebSocket(server); // Pass the HTTPS server
+        const wss = setupWebSocket(server); // Pass the HTTP server
 
         server.listen({ port: PORT, host: '0.0.0.0' }, () => { // Listen on all interfaces
-            console.log(`🚀 Server listening securely on port ${PORT} using self-signed certs`);
-            console.log(`   - Local (for Nginx proxy): https://localhost:${PORT}`);
-            // ... (rest of the IP logging) ...
+            // console.log(`🚀 Server listening securely on port ${PORT} using self-signed certs`); // REMOVE
+            console.log(`🚀 Server listening on HTTP port ${PORT}`); // ADD - Correct log message
+            console.log(`   - Local (for Nginx proxy): http://localhost:${PORT}`); // CHANGE TO HTTP
+            // Log network interfaces (optional but helpful)
+            const interfaces = os.networkInterfaces();
+            Object.keys(interfaces).forEach(ifaceName => {
+                interfaces[ifaceName]?.forEach(iface => {
+                    if (iface.family === 'IPv4' && !iface.internal) {
+                        console.log(`   - Network: http://${iface.address}:${PORT}`);
+                    }
+                });
+            });
         });
 
-        // --- Graceful Shutdown Handling (remains the same) ---
-        // ...
+        // --- Graceful Shutdown Handling ---
+        const signals = { 'SIGINT': 2, 'SIGTERM': 15 };
+        let shuttingDown = false;
+
+        Object.keys(signals).forEach((signal) => {
+            process.on(signal, async () => {
+                if (shuttingDown) return;
+                shuttingDown = true;
+                console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
+
+                // 1. Close WebSocket Server
+                console.log("Closing WebSocket server...");
+                await closeWebSocketServer(); // Assuming closeWebSocketServer returns a Promise or handles async ops
+
+                // 2. Close HTTP Server
+                console.log("Closing HTTP server...");
+                server.close(async (err) => {
+                    if (err) {
+                        console.error("Error closing HTTP server:", err);
+                    } else {
+                        console.log("HTTP server closed.");
+                    }
+
+                    // 3. Close Database Connection
+                    console.log("Closing database connection...");
+                    try {
+                        await closeDatabase();
+                        console.log("Database connection closed.");
+                    } catch (dbErr) {
+                        console.error("Error closing database:", dbErr);
+                    }
+
+                    // 4. Exit Process
+                    console.log("Shutdown complete. Exiting.");
+                    process.exit(err ? 1 : 0); // Exit with error code if server closing failed
+                });
+
+                // Force exit after a timeout (e.g., 10 seconds) if shutdown hangs
+                setTimeout(() => {
+                    console.error("Graceful shutdown timed out. Forcing exit.");
+                    process.exit(1);
+                }, 10000).unref(); // unref() allows the program to exit if shutdown finishes quickly
+            });
+        });
+        // ---------------------------------
 
     } catch (startupError) {
         console.error("💥 Failed during server startup:", startupError);

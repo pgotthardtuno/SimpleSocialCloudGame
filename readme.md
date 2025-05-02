@@ -1,96 +1,64 @@
-Deployment Instructions for UBUNTU
+    sudo apt update
+    sudo apt upgrade -y
+        sudo apt install git -y
+        
+# Add Docker's official GPG key:
+    sudo apt-get update
+    sudo apt-get install ca-certificates curl
+    sudo install -m 0755 -d /etc/apt/keyrings
+    sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+    sudo chmod a+r /etc/apt/keyrings/docker.asc
 
-# Update package lists
-sudo apt update
+    # Add the repository to Apt sources:
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    sudo apt-get update
 
-# Install Node.js (using NodeSource for a recent version)
-# Check NodeSource docs for the latest recommended version if needed
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-sudo apt install -y nodejs
-
-# Install Git
-sudo apt install -y git
-
-# Install Nginx
-sudo apt install -y nginx
-
-# Verify installations (optional)
-node -v
-npm -v
-git --version
-nginx -v
-
-
-
-
-# Navigate to a suitable directory
-mkdir CloudCode
-cd CloudCode
-
-# Clone the repository
-git clone https://github.com/pgotthardtuno/SimpleSocialCloudGame.git .
-
-npm install
-
-npm run build
-
-# Install Certbot and its Nginx plugin
-sudo apt install -y certbot python3-certbot-nginx
-
-# Obtain and install the certificate (follow the prompts)
-# Replace 'your_domain.com' and 'www.your_domain.com' with your actual domain(s)
-sudo certbot --nginx -d 18.118.205.217 -d 18.118.205.217
-
-# Certbot will ask about redirecting HTTP to HTTPS - choose the redirect option (usually option 2).
-# It will automatically modify your Nginx configuration for SSL.
-
-# Set up automatic renewal (Certbot usually does this during installation)
-sudo certbot renew --dry-run # Test the renewal process
-
-
-sudo nano /etc/nginx/sites-available/your_domain_or_default     
-
-    location / {
-        # --- Proxy to your Node.js app (running HTTPS on port 3000) ---
-        # Ensure this points to the correct port your Node app uses (3000 in this case)
-        # Since Node is running HTTPS locally, use https://
-        proxy_pass https://localhost:3000; 
-
-        # --- Headers needed for the backend app ---
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme; # $scheme will be 'https'
-
-        # --- WebSocket Support ---
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-
-        # --- Adjust timeouts if needed ---
-        proxy_read_timeout 300s; 
-        proxy_send_timeout 300s; 
-    }
+    # Install Docker Engine, CLI, Containerd, and Compose plugin:
+    sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
     
-sudo systemctl restart nginx
+    sudo usermod -aG docker $USER
+    
+    sudo apt install nginx -y
+    
+    sudo systemctl status nginx
+    
+    sudo mkdir -p /etc/ssl/private /etc/ssl/certs
+    
+        sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+     -keyout /etc/ssl/private/nginx-selfsigned.key \
+     -out /etc/ssl/certs/nginx-selfsigned.crt
 
-# Install PM2 globally
-sudo npm install pm2 -g
-
-
-# Start your application using PM2
-# Make sure the path to your entry file (dist/server/index.js) is correct
-pm2 start dist/server/index.js --name social-cloud-game
-
-# Check the status of your running applications
-pm2 list
-
-# (Optional) View logs
-pm2 logs social-cloud-game
-
-# (Optional) Set up PM2 to start automatically on server reboot
-pm2 startup systemd
-# Follow the instructions given by the command above (it will likely give you a 'sudo env ...' command to run)
-
-# Save the current PM2 process list
-pm2 save 
+    sudo openssl dhparam -out /etc/ssl/certs/dhparam.pem 2048 # Or 4096 for stronger security
+    
+    
+    sudo chmod 600 /etc/ssl/private/nginx-selfsigned.key
+    sudo chmod 644 /etc/ssl/certs/nginx-selfsigned.crt
+    sudo chmod 644 /etc/ssl/certs/dhparam.pem
+    
+    cd ~
+    git clone https://github.com/pgotthardtuno/SimpleSocialCloudGame.git
+    cd SimpleSocialCloudGame
+    
+    sudo cp nginx.conf /etc/nginx/sites-available/socialcloudgame
+    
+        sudo rm /etc/nginx/sites-enabled/default
+    
+        sudo ln -s /etc/nginx/sites-available/socialcloudgame /etc/nginx/sites-enabled/
+    
+        sudo nginx -t
+    
+    sudo systemctl reload nginx
+    
+    # If you added your user to the docker group and logged out/in:
+    docker build -t socialcloudgame .
+    # If not, use sudo:
+    # sudo docker build -t socialcloudgame .
+    
+    # If you added your user to the docker group and logged out/in:
+    docker run -d --restart always -p 127.0.0.1:3000:3000 --name socialcloudgame-app socialcloudgame
+    # If not, use sudo:
+    # sudo docker run -d --restart always -p 127.0.0.1:3000:3000 --name socialcloudgame-app socialcloudgame
+    

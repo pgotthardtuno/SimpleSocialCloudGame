@@ -11,7 +11,7 @@ export const PORT: number = (portFromEnv !== undefined && !isNaN(portFromEnv)) ?
 export function createExpressApp(): express.Application {
     const app: express.Application = express();
     // Use the host defined by the server listening address, or localhost for default
-    const SERVER_HOST = process.env.HOST || 'localhost'; // Use 'localhost' or your domain/IP
+    const SERVER_HOST = process.env.HOST || '3.145.78.35'; // UPDATE HERE
 
     console.log("Configuring Express app for HTTPS...");
 
@@ -88,10 +88,18 @@ export function createExpressApp(): express.Application {
     app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
         console.error("Unhandled Error:", err.stack || err);
         let statusCode = 500;
-        // ... (error handling remains the same) ...
+        // Basic error type checking (can be expanded)
+        if (err.name === 'UnauthorizedError') { // Example for JWT errors
+            statusCode = 401;
+        } else if (err.message.includes('Not Found')) { // Basic check for 404 type errors
+            statusCode = 404;
+        }
+        // Add more specific error checks if needed
+
         if (!res.headersSent) {
             res.status(statusCode).json({ message: err.message || 'Internal Server Error' });
         } else {
+            // If headers already sent, delegate to default Express error handler
             next(err);
         }
     });

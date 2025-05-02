@@ -1,0 +1,32 @@
+# Git files
+.git
+.gitignore
+
+# Node modules (will be installed in the container)
+node_modules
+
+# Build output (will be generated in the container)
+dist
+
+# Environment files (should be injected, not baked in)
+.env
+
+# Database file (should use a volume or external DB)
+database.db
+
+# Docker specific files
+Dockerfile
+.dockerignore
+
+# Editor/IDE config
+.idea
+.vscode
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Other
+readme.md
+nginx.conf # Assuming Nginx runs outside the container
