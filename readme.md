@@ -1,97 +1,96 @@
 Deployment Instructions for UBUNTU
 
-// GET GIT //
+# Update package lists
 sudo apt update
 
-sudo apt install git -y
+# Install Node.js (using NodeSource for a recent version)
+# Check NodeSource docs for the latest recommended version if needed
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt install -y nodejs
 
-// GET NODE JS //
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+# Install Git
+sudo apt install -y git
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+# Install Nginx
+sudo apt install -y nginx
 
-nvm install 20
-
-nvm use 20
-nvm alias default 20
-
+# Verify installations (optional)
 node -v
 npm -v
+git --version
+nginx -v
 
-// GET NGINX //
-sudo apt install nginx -y
 
-sudo systemctl start nginx
-sudo systemctl enable nginx
 
-sudo apt install build-essential python3 -y
 
-// GET PM2 //
-sudo npm install pm2 -g
+# Navigate to a suitable directory
+mkdir CloudCode
+cd CloudCode
 
-// GET SOURCE CODE //
+# Clone the repository
 git clone https://github.com/pgotthardtuno/SimpleSocialCloudGame.git .
 
 npm install
 
 npm run build
 
-// CONFIGURE ENVIRONMENT //
-nano .env
+# Install Certbot and its Nginx plugin
+sudo apt install -y certbot python3-certbot-nginx
 
-// PUT THIS BLOCK INTO THE .ENV FILE AND SAVE IT //
+# Obtain and install the certificate (follow the prompts)
+# Replace 'your_domain.com' and 'www.your_domain.com' with your actual domain(s)
+sudo certbot --nginx -d 18.118.205.217 -d 18.118.205.217
 
-PORT=3000
-JWT_SECRET="H27&si&go*8sgFSHS"
+# Certbot will ask about redirecting HTTP to HTTPS - choose the redirect option (usually option 2).
+# It will automatically modify your Nginx configuration for SSL.
 
-// END .ENV FILE //
+# Set up automatic renewal (Certbot usually does this during installation)
+sudo certbot renew --dry-run # Test the renewal process
 
-sudo rm /etc/nginx/sites-enabled/default
 
-sudo nano /etc/nginx/sites-available/social-game
-        
-// PUT THIS BLOCK INTO YOUR nginx.conf AND SAVE IT //
-        server {
-            listen 80 default_server;
-            listen [::]:80 default_server;
+sudo nano /etc/nginx/sites-available/your_domain_or_default     
 
-            # Replace _ with your domain or EC2 public IP
-            server_name {insert EC2 public IP};
+    location / {
+        # --- Proxy to your Node.js app (running HTTPS on port 3000) ---
+        # Ensure this points to the correct port your Node app uses (3000 in this case)
+        # Since Node is running HTTPS locally, use https://
+        proxy_pass https://localhost:3000; 
 
-            # Optional: Set up logging
-            access_log /var/log/nginx/social-game.access.log;
-            error_log /var/log/nginx/social-game.error.log;
+        # --- Headers needed for the backend app ---
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme; # $scheme will be 'https'
 
-            location / {
-                proxy_pass http://localhost:3000; 
-                proxy_http_version 1.1;
-                proxy_set_header Upgrade $http_upgrade; 
-                proxy_set_header Connection 'upgrade';   
-                proxy_set_header Host $host;
-                proxy_set_header X-Real-IP $remote_addr;
-                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                proxy_set_header X-Forwarded-Proto $scheme;
-                proxy_cache_bypass $http_upgrade;
-                proxy_read_timeout 86400s; 
-                proxy_send_timeout 86400s;
-            }
-        }
+        # --- WebSocket Support ---
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
 
-// END NGINX.CONF FILE //
-
-// START NGINX //
-sudo ln -s /etc/nginx/sites-available/social-game /etc/nginx/sites-enabled/
-
+        # --- Adjust timeouts if needed ---
+        proxy_read_timeout 300s; 
+        proxy_send_timeout 300s; 
+    }
+    
 sudo systemctl restart nginx
 
-// START WEB APP AS BACKGROUND PROCESS //
-pm2 start dist/server/index.js --name social-game
+# Install PM2 globally
+sudo npm install pm2 -g
 
-// EC2 SECURITY RULES //
 
-INBOUND: 
-http (port 80) - 0.0.0.0
-    
-        
+# Start your application using PM2
+# Make sure the path to your entry file (dist/server/index.js) is correct
+pm2 start dist/server/index.js --name social-cloud-game
+
+# Check the status of your running applications
+pm2 list
+
+# (Optional) View logs
+pm2 logs social-cloud-game
+
+# (Optional) Set up PM2 to start automatically on server reboot
+pm2 startup systemd
+# Follow the instructions given by the command above (it will likely give you a 'sudo env ...' command to run)
+
+# Save the current PM2 process list
+pm2 save 
