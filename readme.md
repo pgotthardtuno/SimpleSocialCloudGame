@@ -183,8 +183,8 @@
     sudo docker run \
     -p 127.0.0.1:3000:3000 \
     -e PORT=3000 \
-    -e JWT_SECRET="H&H@&@82dffe" \
-    -e SERVER_HOST=3.145.78.35 \
+    -e JWT_SECRET=" " \
+    -e SERVER_HOST=0.0.0.0 \
     --name socialcloudgame-app-env \
     socialcloudgame
     
