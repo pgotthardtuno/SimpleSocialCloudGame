@@ -1,15 +1,18 @@
+# Basic Ubuntu start    
     sudo apt update
     sudo apt upgrade -y
     sudo apt install git -y
-        
+
 # Add Docker's official GPG key:
+
     sudo apt-get update
     sudo apt-get install ca-certificates curl
     sudo install -m 0755 -d /etc/apt/keyrings
     sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
     sudo chmod a+r /etc/apt/keyrings/docker.asc
 
-    # Add the repository to Apt sources:
+# Add the repository to Apt sources:
+
     echo \
       "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
       $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
@@ -20,9 +23,9 @@
     sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
     
     sudo usermod -aG docker $USER
-    
-    
-   
+
+
+
 #NGINX
 
 sudo apt-get update
@@ -38,6 +41,7 @@ sudo nano /etc/nginx/nginx.conf
 
 
 #PASTE INTO FILE#
+
 # /etc/nginx/nginx.conf OR /etc/nginx/sites-available/default
 
 # --- Basic Settings (Adjust worker_processes if needed based on CPU cores) ---
@@ -158,16 +162,29 @@ server_tokens off; # Hide Nginx version
 # END PASTE INTO FILE #
 
 sudo systemctl reload nginx
-    
+
+# Get source code from GIT
+
+mkdir SocialGame
+cd SocialGame
+git clone https://github.com/pgotthardtuno/SimpleSocialCloudGame.git
+cd SimpleSocialCloudGame
+
+
+# Build with docker
+
 sudo docker build -t socialcloudgame .
 
-nano .env
+# Deploy with docker
 
-# Make sure .env contains SERVER_HOST=your_ip
+# Make sure to replace SERVER_HOST=0.0.0.0 with YOUR IP ADDRESS
+# Make sure to replace JWT_SECRET=" " with whatever secret you want for encryption
+
 sudo docker run \
--p 127.0.0.1:80:80 \   # Map host 80 to container 80 (for HTTP redirect)
--p 127.0.0.1:443:443 \ # Map host 443 to container 443 (for HTTPS)
---env-file .env \      # Pass all variables from .env file
+-p 127.0.0.1:3000:3000 \
+-e PORT=3000 \
+-e JWT_SECRET="H&H@&@82dffe" \
+-e SERVER_HOST=3.145.78.35 \
 --name socialcloudgame-app-env \
-your_docker_image_name # Replace with your actual image name
+socialcloudgame
     
