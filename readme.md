@@ -40,7 +40,7 @@
     sudo nano /etc/nginx/nginx.conf
 
 
-#PASTE INTO FILE#
+#PASTE INTO FILE# IMPORTANT # UPDATE YOUR IP ADDRESS AT THE TWO POINTS IN THE FILE #
 
     # /etc/nginx/nginx.conf OR /etc/nginx/sites-available/default
     
